@@ -1447,6 +1447,31 @@ type ReclaimedLease struct {
 	PreviousOwner string `json:"previous_owner"`
 }
 
+// ReclaimFilter scopes which stale-lease issues bd reclaim may revert. The
+// zero value reclaims every stale lease (the historical global behavior);
+// every populated field narrows the set further (fields AND-combine).
+//
+// Scoping matters on a federated deployment: each replica's view of another
+// machine's liveness is stale by up to one sync interval, so an unscoped
+// reaper can revert a unit that is very much alive on the machine that granted
+// its lease. Partitioning reclaim by the same label surface the claim side is
+// partitioned by (--label/--label-any/--exclude-label, plus --assignee/--id)
+// turns after-the-fact revert auditing into prevention.
+type ReclaimFilter struct {
+	IDs           []string // Only these issue IDs are eligible
+	Assignees     []string // Only leases held by one of these owners
+	Labels        []string // AND semantics: issue must have ALL these labels
+	LabelsAny     []string // OR semantics: issue must have AT LEAST ONE of these labels
+	ExcludeLabels []string // Exclusion: issue must NOT have ANY of these labels
+}
+
+// IsEmpty reports whether the filter constrains nothing, i.e. reclaim runs in
+// its global, unscoped form.
+func (f ReclaimFilter) IsEmpty() bool {
+	return len(f.IDs) == 0 && len(f.Assignees) == 0 &&
+		len(f.Labels) == 0 && len(f.LabelsAny) == 0 && len(f.ExcludeLabels) == 0
+}
+
 // WorkFilter is used to filter ready work queries
 type WorkFilter struct {
 	Status        Status

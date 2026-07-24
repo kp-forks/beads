@@ -70,7 +70,7 @@ type IssueSQLRepository interface {
 	GetStaleIssues(ctx context.Context, filter types.StaleFilter) ([]*types.Issue, error)
 	GetEpicsEligibleForClosure(ctx context.Context) ([]*types.EpicStatus, error)
 	UnclaimIssue(ctx context.Context, id, actor string, force bool) error
-	ReclaimExpiredLeases(ctx context.Context, olderThan time.Duration, actor string) ([]types.ReclaimedLease, error)
+	ReclaimExpiredLeases(ctx context.Context, olderThan time.Duration, filter types.ReclaimFilter, actor string) ([]types.ReclaimedLease, error)
 }
 
 type CloseRowParams struct {
@@ -240,7 +240,7 @@ type IssueUseCase interface {
 	GetStaleIssues(ctx context.Context, filter types.StaleFilter) ([]*types.Issue, error)
 	GetEpicsEligibleForClosure(ctx context.Context) ([]*types.EpicStatus, error)
 	Unclaim(ctx context.Context, id, actor string, force bool) error
-	ReclaimExpiredLeases(ctx context.Context, olderThan time.Duration, actor string) ([]types.ReclaimedLease, error)
+	ReclaimExpiredLeases(ctx context.Context, olderThan time.Duration, filter types.ReclaimFilter, actor string) ([]types.ReclaimedLease, error)
 
 	CreateIssue(ctx context.Context, params CreateIssueParams, actor string) (CreateIssueResult, error)
 	CreateIssues(ctx context.Context, params []CreateIssueParams, actor string) (CreateIssuesResult, error)
@@ -1598,8 +1598,8 @@ func (u *issueUseCaseImpl) Unclaim(ctx context.Context, id, actor string, force 
 	return nil
 }
 
-func (u *issueUseCaseImpl) ReclaimExpiredLeases(ctx context.Context, olderThan time.Duration, actor string) ([]types.ReclaimedLease, error) {
-	out, err := u.issueRepo.ReclaimExpiredLeases(ctx, olderThan, actor)
+func (u *issueUseCaseImpl) ReclaimExpiredLeases(ctx context.Context, olderThan time.Duration, filter types.ReclaimFilter, actor string) ([]types.ReclaimedLease, error) {
+	out, err := u.issueRepo.ReclaimExpiredLeases(ctx, olderThan, filter, actor)
 	if err != nil {
 		return nil, fmt.Errorf("ReclaimExpiredLeases: %w", err)
 	}

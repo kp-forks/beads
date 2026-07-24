@@ -120,12 +120,12 @@ func (s *EmbeddedDoltStore) HeartbeatIssue(ctx context.Context, id, actor string
 
 // ReclaimExpiredLeases reverts in_progress issues whose lease expired more than
 // olderThan ago back to ready, recovering work stranded by dead workers.
-func (s *EmbeddedDoltStore) ReclaimExpiredLeases(ctx context.Context, olderThan time.Duration, actor string) ([]types.ReclaimedLease, error) {
+func (s *EmbeddedDoltStore) ReclaimExpiredLeases(ctx context.Context, olderThan time.Duration, filter types.ReclaimFilter, actor string) ([]types.ReclaimedLease, error) {
 	cutoff := time.Now().UTC().Add(-olderThan)
 	var reclaimed []types.ReclaimedLease
 	err := s.withConn(ctx, true, func(tx *sql.Tx) error {
 		var err error
-		reclaimed, err = issueops.ReclaimExpiredLeasesInTx(ctx, tx, cutoff, actor)
+		reclaimed, err = issueops.ReclaimExpiredLeasesInTx(ctx, tx, cutoff, filter, actor)
 		return err
 	})
 	return reclaimed, err

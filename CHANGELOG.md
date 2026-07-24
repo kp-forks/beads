@@ -7,7 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`bd reclaim` scope filters** (wy-jpd3.3). `bd reclaim` gained
+  `--label` / `--label-any` / `--exclude-label` / `--assignee` / `--id`,
+  mirroring the claim-side label surface (`bd ready --claim`), so a supervisor
+  can scope its reaper to exactly the partition it claims from. Filters
+  AND-combine and never widen the stale set. This matters on a federated
+  deployment: each replica's view of another machine's liveness is stale by up
+  to one sync interval, so an unscoped reaper on one machine can revert a unit
+  that is alive on the machine that granted its lease — point each supervisor's
+  reclaim at its own claim partition and that cannot happen. A scope flag
+  supplied with no usable value (e.g. `--label "$LANE"` with `LANE` unset) is a
+  hard error rather than a silent degrade into a global sweep, and the builder
+  fails closed (`1=0`) for programmatic callers. `bd reclaim --json` now reports
+  a `scoped` boolean so a reclaim log distinguishes a scoped sweep from a global
+  one.
+
 ### Changed
+
+- **`beads.BulkIssueStore.ReclaimExpiredLeases` gained a `types.ReclaimFilter`
+  parameter** (wy-jpd3.3), threaded through the domain use-case/repository
+  interfaces and every backend. Callers that reclaim globally pass the zero
+  `types.ReclaimFilter{}` (unchanged behavior); any external type that
+  *implements* the interface must update its signature to compile.
 
 - **Public `beads.Storage` interface gained two required methods**
   ([#4911](https://github.com/gastownhall/beads/pull/4911)). `UpdateIssueChecked`
